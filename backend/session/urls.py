@@ -7,6 +7,7 @@ urlpatterns = [
     path('jwt/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('jwt/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('jwt/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('login/', views.login, name='login'),
     path('otp/generarToken/', views.generar_otp, name='generar_otp'),
     path('otp/usarToken/', views.usar_otp, name='usar_otp'),
     path('otp/token/all/', include(router.urls), name='token_all'),

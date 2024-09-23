@@ -5,7 +5,7 @@ from base.models import BaseModel
 
 class TokenOTPUser(BaseModel):
     TOKEN_EXPIRATION_TIME = 60
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     secret = models.CharField(max_length=32, null=True)
 
 

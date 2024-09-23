@@ -2,7 +2,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from session.classes import PyOTPProvider
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
 import datetime
+from django.http import JsonResponse
 
 
 @api_view(['GET'])
@@ -28,3 +32,32 @@ def usar_otp(request):
     return Response({
         'is_valid': token_is_valid
     })
+
+
+@api_view(['POST'])
+@permission_classes([])
+def login(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    user = authenticate(username=username, password=password)
+
+    if user is not None:
+        refresh = RefreshToken.for_user(user)
+        response = JsonResponse({
+            'message': 'Login successful',
+        })
+
+        response.set_cookie(
+            key='access_token',
+            value=str(refresh.access_token),
+            httponly=True,
+            samesite='Lax'
+        )
+
+        return response
+
+    else:
+        return Response(
+            {'error': 'Invalid username or password'},
+            status=status.HTTP_400_BAD_REQUEST)
+
