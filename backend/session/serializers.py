@@ -1,21 +1,23 @@
 from rest_framework import serializers, routers, viewsets
+from rest_framework.pagination import PageNumberPagination
 from session.models import TokenUserLog
 
 
 class TokenUserLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = TokenUserLog
-        fields = ('created_at', 'token_otp', 'is_already_used', 'date_used')
+        fields = '__all__'
         read_only_fields = ('itoken',)
 
 
 class TokenUserLogViewSet(viewsets.ModelViewSet):
     serializer_class = TokenUserLogSerializer
-    queryset = TokenUserLog.objects.all()
+    pagination_class = PageNumberPagination
+    queryset = TokenUserLog.objects.all().order_by('-created_at')
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset
+        user = self.request.user
+        return self.queryset.filter(user=user)
 
 
 router = routers.DefaultRouter()

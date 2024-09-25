@@ -41,13 +41,12 @@ class PyOTPProvider(OTPProvider):
         existing_log = TokenUserLog.objects.filter(
             user=self.user,
             token_otp=token_otp,
-            created_at__gte=timezone.now() + ttl
         ).exists()
 
         if not existing_log:
             TokenUserLog.objects.create(
                 user=self.user,
-                token_otp=hash_sha256(token_otp)
+                token_otp=token_otp
             )
         return token_otp
 

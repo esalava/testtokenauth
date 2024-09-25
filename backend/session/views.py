@@ -37,14 +37,15 @@ def usar_otp(request):
 @api_view(['POST'])
 @permission_classes([])
 def login(request):
-    username = request.POST.get('username')
-    password = request.POST.get('password')
+    username = request.data.get('username')
+    password = request.data.get('password')
     user = authenticate(username=username, password=password)
 
     if user is not None:
         refresh = RefreshToken.for_user(user)
         response = JsonResponse({
             'message': 'Login successful',
+            'access_token': str(refresh.access_token)
         })
 
         response.set_cookie(
