@@ -1,39 +1,35 @@
 'use client';
 
-import { useState } from 'react';
-import { TextField, Button, Typography, Container, Box, CircularProgress } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { TextField, Button, Typography, Container, Box } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import axiosConfig from '@/services/base';
+import { useLogin } from '@/services/loginService/useLogin';
 
 export default function LoginPage() {
   const router = useRouter();
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const { loginMutation, dataLogin,  loginError, statusLogin} = useLogin();
 
   const onSubmit = async (data) => {
-    setLoading(true);
-    setServerError('');
+    loginMutation(data);
+    if (loginError) {
+      setServerError('Credenciales incorrectas o problema con el servidor');
+      return;
+    }    
+  };
 
-    try {
-      const response = await axiosConfig.post('/api/session/login/', data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        withCredentials: true,
-      });
-      const {access_token} = response.data
+  useEffect(() => {
+    if (statusLogin === 'success') {
+      const {access_token} = dataLogin.data
       if (access_token) {
         localStorage.setItem('access_token', access_token);
         router.push('/web_app/dashboard');
       }
-    } catch (error) {
-      setServerError('Credenciales incorrectas o problema con el servidor');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [statusLogin])
 
   return (
     <Container maxWidth="xs">
@@ -81,7 +77,7 @@ export default function LoginPage() {
           sx={{ mt: 3, mb: 2 }}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : 'Login'}
+          Login
         </Button>
       </Box>
     </Container>

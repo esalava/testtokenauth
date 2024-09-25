@@ -1,42 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, CircularProgress, Typography, Button } from '@mui/material';
-import axiosConfig from '@/services/base';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { useToken } from '@/services/tokenService/useToken';
+import { useTokens } from '@/services/tokenService/useToken';
 
 export default function CurrentToken() {
   const [token, setToken] = useState('');
   const [expirationTime, setExpirationTime] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const {refetchAllTokens} = useTokens();
 
-  const fetchToken = async () => {
-    setLoading(true);
-    try {
-      const response = await axiosConfig.get('/api/session/otp/generarToken/');
-      const { token, time_remaining } = response.data;
+  const {
+    newTokenData,
+    refetchNewToken,
+    isLoadingNewToken
+  } = useToken();
+
+  const handleNewToken = () => {
+    if (newTokenData) {
+      const {token, time_remaining} = newTokenData 
       setToken(token);
       setExpirationTime(time_remaining);
-    } catch (error) {
-      console.error('Error al generar el token', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchToken();
+    refetchNewToken();
     const interval = setInterval(() => {
       setExpirationTime((prevTime) => {
         if (prevTime <= 1) {
-          fetchToken();
+          refetchNewToken();
           return 0;
         }
         return prevTime - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refetchNewToken]);
 
+  useEffect(() => {
+    handleNewToken();
+    refetchAllTokens();
+  }, [newTokenData]);
+
+  if (isLoadingNewToken) {
+    return <CircularProgress />;
+  }
+  
   const expirationProgress = (expirationTime / 60) * 100;
 
   return (
@@ -49,7 +59,7 @@ export default function CurrentToken() {
     >
       <Typography variant="h5">Token OTP</Typography>
 
-      {loading ? (
+      {isLoadingNewToken ? (
         <CircularProgress />
       ) : (
         <>

@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TextField, Button, Typography, Card, CardContent } from '@mui/material';
-import axiosConfig from '@/services/base';
+import { useToken } from '@/services/tokenService/useToken';
 
 const UseToken = () => {
   const [tokenInput, setTokenInput] = useState('');
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(null);
+  const { postTokenMutation, postTokenStatus, postTokenData } = useToken();
 
   const handleInputChange = (event) => {
     setTokenInput(event.target.value);
@@ -16,11 +17,12 @@ const UseToken = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage('');
+    postTokenMutation({ token: tokenInput });
+  };
 
-    try {
-      const response = await axiosConfig.post(`/api/session/otp/usarToken/?otp=${tokenInput}`);
-      const { is_valid } = response.data;
-
+  useEffect(() => {
+    if (postTokenStatus === 'success') {
+      const {is_valid} = postTokenData.data;
       if (is_valid) {
         setMessage('Token used successfully!');
         setIsSuccess(true);
@@ -28,11 +30,8 @@ const UseToken = () => {
         setMessage('Invalid token. Please try again.');
         setIsSuccess(false);
       }
-    } catch (error) {
-      setMessage('Error while using the token. Please try again later.');
-      setIsSuccess(false);
     }
-  };
+  }, [postTokenStatus]);
 
   return (
     <Card sx={{ marginTop: 2 }}>

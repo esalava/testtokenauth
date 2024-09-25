@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import axiosConfig from '@/services/base';
 import {
   Table,
   TableBody,
@@ -15,31 +13,19 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useTokens } from '@/services/tokenService/useToken';
+import { usePaginationStore } from '../stores/useTokensStore';
 
 const TokenList = () => {
-  const [tokens, setTokens] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [count, setCount] = useState(0);
-  const [next, setNext] = useState(null);
-  const [previous, setPrevious] = useState(null);
+  const page = usePaginationStore((state)=> state.page);
+  const rowsPerPage = usePaginationStore((state)=> state.rowsPerPage);
+  const { dataAllTokens, isLoadingAllTokens } = useTokens();
 
-  const fetchTokens = async (pageNum) => {
-    try {
-      const response = await axiosConfig.get(`/api/session/otp/token/all/?page=${pageNum}&limit=${rowsPerPage}`);
-      const { count, next, previous, results } = response.data;
-      setTokens(results);
-      setCount(count);
-      setNext(next);
-      setPrevious(previous);
-    } catch (error) {
-      console.error('Error fetching tokens:', error);
-    }
-  };
+  if (isLoadingAllTokens) {
+    return <p>Loading...</p>;
+  }
 
-  useEffect(() => {
-    fetchTokens(page + 1);
-  }, [page, rowsPerPage]);
+  const { count, results } = dataAllTokens;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -47,12 +33,12 @@ const TokenList = () => {
   };
 
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+    usePaginationStore.setState({page: newPage});
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    usePaginationStore.setState({rowsPerPage: parseInt(event.target.value, 10)});
+    usePaginationStore.setState({page: 0});
   };
 
   return (
@@ -68,7 +54,7 @@ const TokenList = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {tokens.map((token, index) => (
+            {results.map((token, index) => (
               <TableRow key={index}>
                 <TableCell>{token.token_otp}</TableCell>
                 <TableCell>{formatDate(token.created_at)}</TableCell>
@@ -88,13 +74,13 @@ const TokenList = () => {
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
         component="div"
         count={count}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={false}
       />
     </Paper>
   );
